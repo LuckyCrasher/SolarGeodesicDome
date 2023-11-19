@@ -17,7 +17,7 @@ class SolarPanel:
 
     def __init__(self, triangle: np.array):
         self._triangle = triangle
-        self._face_color = random.Random().randint(0, 10)/10
+        self._face_color = self.get_area()
 
     def get_triangle(self):
         return self._triangle
@@ -25,16 +25,29 @@ class SolarPanel:
     def get_face_color(self):
         return self._face_color
 
+    def get_area(self):
+        # https://www.youtube.com/watch?v=MnpaeFPyn1A&t=86s
+        p = self._triangle[0]
+        q = self._triangle[1]
+        r = self._triangle[2]
+
+        pq = p - q
+        pr = p - r
+        cross = np.cross(pq, pr)
+        mag = np.linalg.norm(cross)
+        area = 0.5 * mag
+        return area
+
     def __repr__(self):
         return f"{self._triangle}"
 
 
-def plot_panels(panels):
+def plot_panels(panels, size=1):
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
-    ax.set_xlim3d(-1, 1)
-    ax.set_ylim3d(-1, 1)
-    ax.set_zlim3d(-1, 1)
+    ax.set_xlim3d(-size, size)
+    ax.set_ylim3d(-size, size)
+    ax.set_zlim3d(-size, size)
 
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
@@ -55,18 +68,21 @@ def plot_panels(panels):
 
 def main():
 
-    dome = BetterGeodesicDome(subdivisions=0)
-    print(dome.vertices)
-    print(dome.faces)
-
-
+    radius = 100
+    dome = BetterGeodesicDome(radius=radius, subdivisions=3)
 
     panels = []
     triangles = dome.vertices[dome.faces]
     for triangle in triangles:
         panels.append(SolarPanel(triangle))
 
-    plot_panels(panels[0:len(panels)])
+    rolling_sum = 0
+    for panel in panels:
+        rolling_sum += panel.get_area()
+    avg_area = rolling_sum / len(panels)
+    print(f"Average area = {avg_area}")
+
+    plot_panels(panels[0:len(panels)], size=radius)
 
 
 if __name__ == "__main__":
