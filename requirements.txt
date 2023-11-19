@@ -1,1 +1,4 @@
 geodesicdome~=2.0.22
+matplotlib~=3.8.0
+numpy~=1.26.0
+scipy~=1.11.4
