@@ -29,6 +29,9 @@ def generate_vertices_and_faces(radius, center):
 
     vertices = clamp_small_to_zero(vertices)
 
+    print("Rotated vertices")
+    print(vertices)
+
     faces = np.array([
         [0, 11, 5],
         [0, 5, 1],
@@ -56,7 +59,7 @@ def generate_vertices_and_faces(radius, center):
 
 
 def clamp_small_to_zero(values):
-    tol = 1e-2
+    tol = 1e-13
     values[np.abs(values) <= tol] = 0
     return values
 
@@ -104,6 +107,7 @@ class BetterGeodesicDome:
                 # each edge is split in two
                 # enumerating each edge of the triangle like
                 # edge (0,1) or (1,2) or (2,0) where (1,0) and (0,1) are the same edge
+                # therefore (0, 1) (1, 2) (2, 0)
                 for i, j in zip([0, 1, 2], [1, 2, 0]):
                     print(f"Edge: {i},{j}")
                     v_id_a = triangle[i]
@@ -128,8 +132,8 @@ class BetterGeodesicDome:
                 # old vertex and two newly computed ones
                 # The last middle triangle is composed of three newly computed vertices
                 triangle_a = [triangle[0], edge_to_new_vertex_id[(0, 1)], edge_to_new_vertex_id[2, 0]]
-                triangle_b = [triangle[1], edge_to_new_vertex_id[(0, 1)], edge_to_new_vertex_id[1, 2]]
-                triangle_c = [triangle[2], edge_to_new_vertex_id[(1, 2)], edge_to_new_vertex_id[2, 0]]
+                triangle_b = [triangle[1], edge_to_new_vertex_id[(1, 2)], edge_to_new_vertex_id[0, 1]]
+                triangle_c = [triangle[2], edge_to_new_vertex_id[(2, 0)], edge_to_new_vertex_id[1, 2]]
                 triangle_d = [edge_to_new_vertex_id[0, 1], edge_to_new_vertex_id[1, 2], edge_to_new_vertex_id[2, 0]]
 
                 print("New triangles:")
