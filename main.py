@@ -1,9 +1,9 @@
-import matplotlib
-import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D, art3d
+import numpy as np
+import pandas
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from GeodesicDome import GeodesicDome
+import pandas as pd
+
 from GeodesicDome2 import BetterGeodesicDome
 
 
@@ -22,7 +22,7 @@ def map_range(value, left_min, left_max, right_min, right_max):
 class Sun:
 
     def __init__(self):
-        d = np.array([1, 1, 0])
+        d = np.array([1, 1, -0.75])
         self.direction = d / np.linalg.norm(d)
 
 
@@ -61,7 +61,7 @@ class SolarPanel:
     def compute_shading(self, sun):
         mag_panel_normal = np.linalg.norm(self.normalized_normal)
         mag_sun_normal = np.linalg.norm(sun.direction)
-        print(f"Magnitudes {mag_panel_normal}, {mag_sun_normal}")
+        #print(f"Magnitudes {mag_panel_normal}, {mag_sun_normal}")
         a = np.dot(self.normalized_normal, sun.direction)
         b = np.dot(mag_panel_normal, mag_sun_normal)
         c = a / b
@@ -102,7 +102,7 @@ def plot_panels(panels, sun, size=1):
         ax.add_collection3d(poly)
 
     sun_direction = sun.direction
-    ax.quiver(0, 0, 14, sun_direction[0]*2, sun_direction[1]*5, sun_direction[2]*5,
+    ax.quiver(0, 0, size*2, sun_direction[0]*size, sun_direction[1]*size, sun_direction[2]*size,
               color='r', arrow_length_ratio=0.1)
 
     #ax.view_init(elev=10, azim=135)
@@ -114,8 +114,8 @@ def plot_panels(panels, sun, size=1):
 
 def main():
 
-    radius = 10
-    dome = BetterGeodesicDome(radius=radius, subdivisions=1)
+    radius = 100
+    dome = BetterGeodesicDome(radius=radius, subdivisions=3)
 
     sun = Sun()
 
@@ -129,6 +129,33 @@ def main():
         rolling_sum += panel.get_area()
     avg_area = rolling_sum / len(panels)
     print(f"Average area = {avg_area}")
+
+    #panel_illumination['Panels'] = panels
+
+    area = []
+    for panel in panels:
+        area.append(panel.get_area())
+
+    shading = []
+    for panel in panels:
+        shading.append(panel.get_face_color())
+
+    illumination_area = []
+    for panel in panels:
+        illumination_area.append(panel.get_area() * panel.get_face_color())
+
+    panel_illumination = pandas.DataFrame()
+    panel_illumination['area'] = area
+    panel_illumination['shading'] = shading
+    panel_illumination['illuminated per area'] = illumination_area
+    panel_illumination.to_csv("data/panel_illumination.csv")
+
+    #illumination = []
+    #for panel in panels:
+    #    illumination += panel.get_area() * panel.get_face_color()
+
+    #panel_illumination['Illumination'] = illumination
+    #panel_illumination.head()
 
     plot_panels(panels[0:len(panels)], sun, size=radius)
 
