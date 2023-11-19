@@ -1,4 +1,6 @@
 import random
+
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D, art3d
@@ -6,6 +8,8 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 from GeodesicDome import GeodesicDome
 from GeodesicDome2 import BetterGeodesicDome
+
+matplotlib.use('qtagg')
 
 
 class SolarPanel:
@@ -45,23 +49,20 @@ def plot_panels(panels):
                                 edgecolors='black')
         ax.add_collection3d(poly)
 
-    ax.view_init(elev=0, azim=0)
+    ax.view_init(elev=10, azim=135)
     plt.show()
 
 
 def main():
 
-
-    g = GeodesicDome()
-    print(g.v)
-
-    dome = BetterGeodesicDome()
-    print(dome.v)
+    dome = BetterGeodesicDome(subdivisions=0)
+    print(dome.vertices)
+    print(dome.faces)
 
 
 
     panels = []
-    triangles = dome.v[dome.f]
+    triangles = dome.vertices[dome.faces]
     for triangle in triangles:
         panels.append(SolarPanel(triangle))
 
