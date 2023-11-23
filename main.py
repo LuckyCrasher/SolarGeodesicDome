@@ -9,7 +9,7 @@ import pandas as pd
 from GeodesicDome2 import BetterGeodesicDomeGenerator
 from SunPosition import Sun
 
-matplotlib.use('qtagg')
+#matplotlib.use('qtagg')
 
 
 def map_range(value, left_min, left_max, right_min, right_max):
@@ -165,7 +165,7 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
 
 
 def run_simulation(dome, sun):
-    time_delta = 60*60
+    time_delta = 60*20
     for current_time in sun.iterate_sunrise_to_sunset(time_delta):
         print(current_time)
         dome.update_shading()
