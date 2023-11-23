@@ -1,3 +1,5 @@
+import datetime
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -165,9 +167,14 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
 
 def run_simulation(dome, sun):
     time_delta = 60*5
+    start_time = datetime.datetime.now()
+    end_time = datetime.datetime.now()
     for current_time in sun.iterate_sunrise_to_sunset(time_delta):
         print(current_time)
+        start_time = datetime.datetime.now()
         dome.update_shading()
+        end_time = datetime.datetime.now()
+        print(f"Shading took {end_time-start_time}s")
         yield dome
         #dome.compute_absorbed_power()
         #show_dome(dome, sun, fig)
@@ -204,8 +211,13 @@ def save_data(dome):
 
 def render_simulation(fig, dome, sun):
 
+    start_time = datetime.datetime.now()
+    end_time = datetime.datetime.now()
     def animate(an_dome):
+        start_time = datetime.datetime.now()
         show_dome(an_dome, sun, fig)
+        end_time = datetime.datetime.now()
+        print(f"Took {end_time-start_time}s")
 
     animation = FuncAnimation(fig, func=animate, frames=run_simulation(dome, sun), interval=25)
     # setting up wrtiers object
