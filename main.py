@@ -146,7 +146,8 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
         color = plt.cm.Greys(panel.get_face_color())
         poly = Poly3DCollection([panel.get_triangle()], cmap='Greys',
                                 facecolors=color,
-                                edgecolors='black')
+                                edgecolors='black',
+                                linewidths=0.1)
         #ax.quiver(panel.center[0], panel.center[1], panel.center[2],
         #          panel.normal[0], panel.normal[1], panel.normal[2],
         #          color='g', arrow_length_ratio=0.1)
