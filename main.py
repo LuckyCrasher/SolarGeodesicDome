@@ -1,13 +1,15 @@
-import datetime
-from multiprocessing import Pool
-
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas
+from matplotlib.animation import FuncAnimation, writers
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pandas as pd
 
 from GeodesicDome2 import BetterGeodesicDomeGenerator
+from SunPosition import Sun
+
+matplotlib.use('qtagg')
 
 
 def map_range(value, left_min, left_max, right_min, right_max):
@@ -22,101 +24,9 @@ def map_range(value, left_min, left_max, right_min, right_max):
     return right_min + (value_scaled * right_span)
 
 
-def sun_direction(time_seconds, sun):
-    # Constants
-    seconds_in_a_day = 86400  # Number of seconds in a day
-
-    # Calculate the angle based on time
-    angle = 2 * np.pi * (time_seconds % seconds_in_a_day) / seconds_in_a_day
-
-    # Calculate the elevation angle (in radians) based on the latitude and time
-    days_in_year = 365.25
-    declination = 0.409 * np.sin(2 * np.pi * (days_in_year - 81) / 365)  # Approximate declination
-    hour_angle = 2 * np.pi * (time_seconds % seconds_in_a_day) / seconds_in_a_day - np.pi  # Adjust for solar noon
-    elevation_angle = np.arcsin(np.sin(sun.latitude) * np.sin(declination) +
-                                np.cos(sun.latitude) * np.cos(declination) * np.cos(hour_angle))
-
-    # Calculate the spherical coordinates
-    x = np.cos(elevation_angle) * np.cos(angle)
-    y = np.cos(elevation_angle) * np.sin(angle)
-    z = np.sin(elevation_angle)
-
-    # Normalize the vector
-    sun_vector = np.array([x, y, z])
-    sun_vector /= np.linalg.norm(sun_vector)
-
-    return sun_vector
-
-
-def seconds_to_hms(time_seconds):
-    # Calculate hours, minutes, and seconds
-    hours = time_seconds // 3600
-    remaining_seconds = time_seconds % 3600
-    minutes = remaining_seconds // 60
-    seconds = remaining_seconds % 60
-
-    # Format the time as HH:MM:SS
-    time_string = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-    return time_string
-
-
-def find_sunrise_sunset(sun):
-    # Constants
-    seconds_in_a_day = 86400  # Number of seconds in a day
-
-    # Iterate over time to find sunrise and sunset
-    for time_seconds in range(seconds_in_a_day):
-        sun_vector = sun_direction(time_seconds, sun)
-
-        # Check for sunrise (sun crosses horizon going upwards)
-        if sun_direction(time_seconds - 1, sun)[2] <= 0 < sun_vector[2]:
-            sunrise_time = time_seconds
-            break
-
-    # Iterate over time to find sunset (sun crosses horizon going downwards)
-    for time_seconds in range(sunrise_time, seconds_in_a_day):
-        sun_vector = sun_direction(time_seconds, sun)
-
-        if sun_direction(time_seconds - 1, sun)[2] >= 0 > sun_vector[2]:
-            sunset_time = time_seconds
-            break
-    return sunrise_time, sunset_time
-
-
-def iterate_sunrise_to_sunset(sun, interval=600):
-    # Get sunrise and sunset times
-    sunrise_time, sunset_time = find_sunrise_sunset(sun)
-    print(f"Sunrise: {seconds_to_hms(sunrise_time)}")
-    print(f"Sunset: {seconds_to_hms(sunset_time)}")
-    print(f"Daytime: {sunset_time-sunrise_time}s")
-
-    # Iterate over the time range from sunrise to sunset with the specified interval
-    for time_seconds in range(sunrise_time, sunset_time, interval):
-        yield time_seconds
-
-
-class Sun:
-
-    def __init__(self, latitude, longitude, time=0):
-        self.latitude = latitude
-        self.longitude = longitude
-        self.current_time = time
-        self.direction = sun_direction(self.current_time, self)
-
-    def update_sun_direction(self, new_time):
-        self.current_time = new_time
-        self.direction = sun_direction(self.current_time, self)
-
-    def get_direction(self):
-        return -1*self.direction
-
-    def get_time_str(self):
-        return seconds_to_hms(self.current_time)
-
-
 class GeodesicDome:
 
-    def __init__(self, sun, radius=1, subdivisions=0, center=(0, 0, 0)):
+    def __init__(self, sun, radius=1.0, subdivisions=0, center=(0, 0, 0)):
         self.sun = sun
         self.radius = radius
         self.subdivisions = subdivisions
@@ -209,13 +119,13 @@ class SolarPanel:
 
 
 def show_dome(dome, sun, fig):
-    fig.suptitle(sun.get_time_str())
+    fig.suptitle(sun.iteration_time)
     arrangement = (2, 2)
     show_view(dome, sun, fig, arrangement, 1, elev=90, azim=0)
     show_view(dome, sun, fig, arrangement, 2, elev=10, azim=135)
     show_view(dome, sun, fig, arrangement, 3, elev=30, azim=-90)
     show_view(dome, sun, fig, arrangement, 4, elev=0, azim=180)
-    plt.pause(0.005)
+    #plt.pause(0.005)
 
 
 def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
@@ -235,8 +145,8 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
         color = plt.cm.Greys(panel.get_face_color())
         poly = Poly3DCollection([panel.get_triangle()], cmap='Greys',
                                 facecolors=color,
-                                edgecolors='black', linewidths=0.1)
-        # ax.quiver(panel.center[0], panel.center[1], panel.center[2],
+                                edgecolors='black')
+        #ax.quiver(panel.center[0], panel.center[1], panel.center[2],
         #          panel.normal[0], panel.normal[1], panel.normal[2],
         #          color='g', arrow_length_ratio=0.1)
         ax.add_collection3d(poly)
@@ -247,22 +157,21 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
               sun_direction_vector[0]*(size/3),
               sun_direction_vector[1]*(size/3),
               sun_direction_vector[2]*(size/3),
-              color='r', arrow_length_ratio=0.1)
+              color='r', arrow_length_ratio=0.01)
 
     ax.view_init(elev=elev, azim=azim)
     #ax.grid(False)
     #ax.axis('off')
 
 
-def run_simulation(dome, sun, fig):
-    time_delta = 1000
-    for current_time in iterate_sunrise_to_sunset(sun, time_delta):
-        if current_time % 100 == 0:
-            print(seconds_to_hms(current_time))
-        sun.update_sun_direction(current_time)
+def run_simulation(dome, sun):
+    time_delta = 60*60
+    for current_time in sun.iterate_sunrise_to_sunset(time_delta):
+        print(current_time)
         dome.update_shading()
+        yield dome
         #dome.compute_absorbed_power()
-        show_dome(dome, sun, fig)
+        #show_dome(dome, sun, fig)
     #dome.render_absorbed_power()
 
 
@@ -294,6 +203,19 @@ def save_data(dome):
     panel_illumination.to_csv("data/panel_illumination.csv")
 
 
+def render_simulation(fig, dome, sun):
+
+    def animate(an_dome):
+        show_dome(an_dome, sun, fig)
+
+    animation = FuncAnimation(fig, func=animate, frames=run_simulation(dome, sun), interval=10)
+    # setting up wrtiers object
+    writer = writers['ffmpeg']
+    writer = writer(fps=15, metadata={'artist': 'Me'}, bitrate=1800)
+
+    animation.save('animation.mp4', writer)
+
+
 def main():
     # 53.338243, -6.215847
     latitude = np.radians(53.338243)  # Replace with the desired latitude in radians
@@ -304,10 +226,11 @@ def main():
 
     sun = Sun(latitude, longitude)
 
-    radius = 100
+    radius = 94.5
     dome = GeodesicDome(sun, radius=radius, subdivisions=3)
-    run_simulation(dome, sun, fig)
-    plt.show()
+    render_simulation(fig, dome, sun)
+    #run_simulation(dome, sun, fig)
+    #plt.show()
 
 
 if __name__ == "__main__":

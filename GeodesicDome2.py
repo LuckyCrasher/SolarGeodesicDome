@@ -74,7 +74,7 @@ def compute_middle_vertex(a, b, radius=1):
 
 class BetterGeodesicDomeGenerator:
 
-    def __init__(self, subdivisions=0, radius=1, center=(0, 0, 0)):
+    def __init__(self, subdivisions=0, radius=1.0, center=(0, 0, 0)):
         self.subdivisions = subdivisions
         self.radius = radius
         self.center = center
@@ -94,7 +94,7 @@ class BetterGeodesicDomeGenerator:
                 valid_faces.append(face)
         self.faces = valid_faces
 
-    def subdivide(self, divisions=0, radius=1):
+    def subdivide(self, divisions=0, radius=1.0):
         for _ in range(divisions):
 
             # enumerating each triangle
