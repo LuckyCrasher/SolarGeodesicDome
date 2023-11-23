@@ -125,7 +125,6 @@ def show_dome(dome, sun, fig):
     show_view(dome, sun, fig, arrangement, 2, elev=10, azim=135)
     show_view(dome, sun, fig, arrangement, 3, elev=30, azim=-90)
     show_view(dome, sun, fig, arrangement, 4, elev=0, azim=180)
-    #plt.pause(0.005)
 
 
 def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
@@ -165,7 +164,7 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
 
 
 def run_simulation(dome, sun):
-    time_delta = 60*20
+    time_delta = 60*5
     for current_time in sun.iterate_sunrise_to_sunset(time_delta):
         print(current_time)
         dome.update_shading()
@@ -208,12 +207,18 @@ def render_simulation(fig, dome, sun):
     def animate(an_dome):
         show_dome(an_dome, sun, fig)
 
-    animation = FuncAnimation(fig, func=animate, frames=run_simulation(dome, sun), interval=10)
+    animation = FuncAnimation(fig, func=animate, frames=run_simulation(dome, sun), interval=25)
     # setting up wrtiers object
     writer = writers['ffmpeg']
     writer = writer(fps=15, metadata={'artist': 'Me'}, bitrate=1800)
 
-    animation.save('animation.mp4', writer)
+    animation.save('data/animation.mp4', writer)
+
+
+def live_view(dome, sun, fig):
+    for _ in run_simulation(dome, sun):
+        show_dome(dome, sun, fig)
+        plt.pause(0.005)
 
 
 def main():
@@ -229,8 +234,8 @@ def main():
     radius = 94.5
     dome = GeodesicDome(sun, radius=radius, subdivisions=3)
     render_simulation(fig, dome, sun)
-    #run_simulation(dome, sun, fig)
-    #plt.show()
+    #live_view(dome, sun, fig)
+    plt.show()
 
 
 if __name__ == "__main__":
