@@ -1,3 +1,5 @@
+import datetime
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -204,8 +206,13 @@ def save_data(dome):
 
 def render_simulation(fig, dome, sun):
 
+    start_time = datetime.datetime.now()
+    end_time = datetime.datetime.now()
     def animate(an_dome):
+        start_time = datetime.datetime.now()
         show_dome(an_dome, sun, fig)
+        end_time = datetime.datetime.now()
+        print(f"Took {end_time-start_time}s")
 
     animation = FuncAnimation(fig, func=animate, frames=run_simulation(dome, sun), interval=25)
     # setting up wrtiers object
