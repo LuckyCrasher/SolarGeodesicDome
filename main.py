@@ -167,7 +167,7 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
 
 
 def run_simulation(dome, sun):
-    time_delta = 60*5
+    time_delta = 60*120
     start_time = datetime.datetime.now()
     end_time = datetime.datetime.now()
     for current_time in sun.iterate_sunrise_to_sunset(time_delta):
@@ -240,7 +240,7 @@ def main():
     longitude = np.radians(-6.215847)
 
     #fig = plt.figure(dpi=1200)
-    fig = plt.figure()
+    fig = plt.figure(figsize=(16, 9), dpi=1920/16)
 
     sun = Sun(latitude, longitude)
 
