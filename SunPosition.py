@@ -1,4 +1,5 @@
 import math
+from datetime import datetime, timedelta
 
 import numpy as np
 import scipy
@@ -60,119 +61,173 @@ class Location:
 class Time:
 
     def __init__(self, year, month, day, hours, minutes, seconds):
-        self.year = year
-        self.month = month
-        self.day = day
-        self.hours = hours
-        self.minutes = minutes
-        self.seconds = seconds
+        self.time = datetime(year, month, day, hours, minutes, seconds)
 
     def __repr__(self):
-        return f"Time({self.day}/{self.month}/{self.year} - {self.hours}:{self.minutes}:{self.seconds})"
+        return f"Time({self.time.strftime('%d/%m/%Y - %H:%M:%S')})"
 
     def generator(self, delta_seconds=1, max_iterations=None):
         iterations = 0
 
         while max_iterations is None or iterations < max_iterations:
-            total_seconds = (
-                    self.seconds
-                    + self.minutes * 60
-                    + self.hours * 3600
-                    + self.day * 24 * 3600
-                    + self.month * 30 * 24 * 3600
-                    + self.year * 365 * 24 * 3600
-            )
-
-            total_seconds += delta_seconds
-
-            years, total_seconds = divmod(total_seconds, 365 * 24 * 3600)
-            months, total_seconds = divmod(total_seconds, 30 * 24 * 3600)
-            days, total_seconds = divmod(total_seconds, 24 * 3600)
-            hours, total_seconds = divmod(total_seconds, 3600)
-            minutes, seconds = divmod(total_seconds, 60)
-
-            self.year = int(years)
-            self.month = int(months)
-            self.day = int(days)
-            self.hours = int(hours)
-            self.minutes = int(minutes)
-            self.seconds = int(seconds)
-
+            self.time += timedelta(seconds=delta_seconds)
             yield self.copy()
 
             iterations += 1
 
     def add_seconds(self, seconds_to_add):
-        self.seconds += seconds_to_add
+        self.time += timedelta(seconds=seconds_to_add)
 
-        # Update minutes and carry over excess seconds
-        self.minutes += self.seconds // 60
-        self.seconds %= 60
-
-        # Update hours and carry over excess minutes
-        self.hours += self.minutes // 60
-        self.minutes %= 60
-
-        # Update days and carry over excess hours
-        self.day += self.hours // 24
-        self.hours %= 24
-
-        # Update months and carry over excess days
-        # Note: This is a simplified approach; it doesn't handle months of different lengths
-        self.month += self.day // 30
-        self.day %= 30
-
-        # Update years and carry over excess months
-        self.year += self.month // 12
-        self.month %= 12
+    def next_day(self, hours=0, minutes=0, seconds=0):
+        self.time += timedelta(days=1, hours=hours, minutes=minutes, seconds=seconds)
 
     def copy(self):
-        return Time(self.year, self.month, self.day, self.hours, self.minutes, self.seconds)
+        return Time(self.time.year, self.time.month, self.time.day, self.time.hour, self.time.minute, self.time.second)
 
     def is_greater(self, other_time):
-        if self.year > other_time.year:
-            return True
-        elif self.year < other_time.year:
-            return False
+        return self.time > other_time.time
 
-        if self.month > other_time.month:
-            return True
-        elif self.month < other_time.month:
-            return False
+    def get_hours(self):
+        return self.time.hour
 
-        if self.day > other_time.day:
-            return True
-        elif self.day < other_time.day:
-            return False
+    def get_minutes(self):
+        return self.time.minute
 
-        if self.hours > other_time.hours:
-            return True
-        elif self.hours < other_time.hours:
-            return False
+    def get_seconds(self):
+        return self.time.second
 
-        if self.minutes > other_time.minutes:
-            return True
-        elif self.minutes < other_time.minutes:
-            return False
+    def get_year(self):
+        return self.time.year
 
-        if self.seconds > other_time.seconds:
-            return True
-        elif self.seconds < other_time.seconds:
-            return False
+    def get_month(self):
+        return self.time.month
 
-            # If all components are equal, return False
-        return False
+    def get_day(self):
+        return self.time.day
+
+#class Time:
+#
+#    def __init__(self, year, month, day, hours, minutes, seconds):
+#        self.year = year
+#        self.month = month
+#        self.day = day
+#        self.hours = hours
+#        self.minutes = minutes
+#        self.seconds = seconds
+#
+#    def __repr__(self):
+#        return f"Time({self.day}/{self.month}/{self.year} - {self.hours}:{self.minutes}:{self.seconds})"
+#
+#    def generator(self, delta_seconds=1, max_iterations=None):
+#        iterations = 0
+#
+#        while max_iterations is None or iterations < max_iterations:
+#            total_seconds = (
+#                    self.seconds
+#                    + self.minutes * 60
+#                    + self.hours * 3600
+#                    + self.day * 24 * 3600
+#                    + self.month * 30 * 24 * 3600
+#                    + self.year * 365 * 24 * 3600
+#            )
+#
+#            total_seconds += delta_seconds
+#
+#            years, total_seconds = divmod(total_seconds, 365 * 24 * 3600)
+#            months, total_seconds = divmod(total_seconds, 30 * 24 * 3600)
+#            days, total_seconds = divmod(total_seconds, 24 * 3600)
+#            hours, total_seconds = divmod(total_seconds, 3600)
+#            minutes, seconds = divmod(total_seconds, 60)
+#
+#            self.year = int(years)
+#            self.month = int(months)
+#            self.day = int(days)
+#            self.hours = int(hours)
+#            self.minutes = int(minutes)
+#            self.seconds = int(seconds)
+#
+#            yield self.copy()
+#
+#            iterations += 1
+#
+#    def add_seconds(self, seconds_to_add):
+#        self.seconds += seconds_to_add
+#
+#        # Update minutes and carry over excess seconds
+#        self.minutes += self.seconds // 60
+#        self.seconds %= 60
+#
+#        # Update hours and carry over excess minutes
+#        self.hours += self.minutes // 60
+#        self.minutes %= 60
+#
+#        # Update days and carry over excess hours
+#        self.day += self.hours // 24
+#        self.hours %= 24
+#
+#        # Update months and carry over excess days
+#        # Note: This is a simplified approach; it doesn't handle months of different lengths
+#        self.month += self.day // 30
+#        self.day %= 30
+#
+#        # Update years and carry over excess months
+#        self.year += self.month // 12
+#        self.month %= 12
+#
+#    def next_day(self, hours=0, minutes=0, seconds=0):
+#        initial_day = self.day
+#        # Add the specified hours, minutes, and seconds
+#        self.add_seconds(hours * 3600 + minutes * 60 + seconds)
+#        if self.day == initial_day:
+#            self.day += 1
+#
+#    def copy(self):
+#        return Time(self.year, self.month, self.day, self.hours, self.minutes, self.seconds)
+#
+#    def is_greater(self, other_time):
+#        if self.year > other_time.year:
+#            return True
+#        elif self.year < other_time.year:
+#            return False
+#
+#        if self.month > other_time.month:
+#            return True
+#        elif self.month < other_time.month:
+#            return False
+#
+#        if self.day > other_time.day:
+#            return True
+#        elif self.day < other_time.day:
+#            return False
+#
+#        if self.hours > other_time.hours:
+#            return True
+#        elif self.hours < other_time.hours:
+#            return False
+#
+#        if self.minutes > other_time.minutes:
+#            return True
+#        elif self.minutes < other_time.minutes:
+#            return False
+#
+#        if self.seconds > other_time.seconds:
+#            return True
+#        elif self.seconds < other_time.seconds:
+#            return False
+#
+#            # If all components are equal, return False
+#        return False
 
 
 def sunpos_psa(time: Time, location: Location):
     # Sunposition calculates by PSA algorithm
 
     # Calculate time of the day in UT decimal hours
-    decimal_hours = time.hours + (time.minutes + time.seconds / 60.0) / 60.0
+    decimal_hours = time.get_hours() + (time.get_minutes() + time.get_seconds() / 60.0) / 60.0
     # Calculate current Julian Day
-    li_aux1 = (time.month - 14) / 12
-    li_aux2 = (1461 * (time.year + 4800 + li_aux1)) / 4 + (367 * (time.month - 2 - 12 * li_aux1)) / 12 - (
-            3 * ((time.year + 4900 + li_aux1) / 100)) / 4 + time.day - 32075
+    li_aux1 = (time.get_month() - 14) / 12
+    li_aux2 = (1461 * (time.get_year() + 4800 + li_aux1)) / 4 + (367 * (time.get_month() - 2 - 12 * li_aux1)) / 12 - (
+            3 * ((time.get_year() + 4900 + li_aux1) / 100)) / 4 + time.get_day() - 32075
     julian_date = li_aux2 - 0.5 + decimal_hours / 24.0
     # Calculate difference between current Julian Day and JD 2451545.0
     elapsed_julian_days = julian_date - 2451545.0
@@ -230,14 +285,19 @@ def sun_position_vector(azimuth, zenith_angle):
 
 
 class Sun:
+    sunrise_time: Time
+    sunset_time: Time
+    iteration_time: Time
 
-    def __init__(self, latitude, longitude, time=0):
+    def __init__(self, latitude, longitude):
         self.position = Location(latitude, longitude)
         self.current_time = Time(2023, 6, 21, 0, 0, 0)
-        self.sunrise_time, self.sunset_time = self.find_sunrise_sunset()
         self.sun_direction = self.compute_sun_position(self.current_time)
-        self.iteration_time = self.sunrise_time.copy()
         self.time_delta = 1
+
+    def compute_sunrise_sunset(self):
+        self.sunrise_time, self.sunset_time = self.find_sunrise_sunset()
+        self.iteration_time = self.sunrise_time.copy()
 
     def compute_sun_position(self, time):
         azimuth, zenith_angle = sunpos_psa(time, self.position)
@@ -249,7 +309,6 @@ class Sun:
 
     def find_sunrise_sunset(self):
         # Constants
-        seconds_in_a_day = 86400  # Number of seconds in a day
         tmp_time = self.current_time.copy()
 
         # Iterate over time to find sunrise and sunset
@@ -290,19 +349,8 @@ class Sun:
             self.compute_sun_position(current_time)
             return current_time
 
-    def iterate_sunrise_to_sunset(self, time_delta=1):
+    def iterate_sunrise_to_sunset(self, time=None, time_delta=1):
+        self.current_time = time if time is not None else self.current_time
+        self.compute_sunrise_sunset()
         self.time_delta = time_delta
         return self  # Return the iterator itself
-
-    #def iterate_sunrise_to_sunset(self, interval=600):
-    #    # Get sunrise and sunset times
-    #    sunrise_time, sunset_time = self.find_sunrise_sunset()
-    #    print(f"Sunrise: {sunrise_time}")
-    #    print(f"Sunset: {sunset_time}")
-    #    print(f"Daytime: {self.sunset_time.seconds - self.sunrise_time.seconds}s")
-
-    #    # Iterate over the time range from sunrise to sunset with the specified interval
-    #    for time in sunrise_time.generator(delta_seconds=interval):
-    #        if time.is_greater(sunset_time):
-    #            break
-    #        yield time

@@ -1,6 +1,5 @@
 import datetime
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas
@@ -9,9 +8,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import pandas as pd
 
 from GeodesicDome2 import BetterGeodesicDomeGenerator
-from SunPosition import Sun
-
-#matplotlib.use('qtagg')
+from SunPosition import Sun, Time
 
 
 def map_range(value, left_min, left_max, right_min, right_max):
@@ -94,7 +91,7 @@ class SolarPanel:
     def compute_shading(self, sun):
         mag_panel_normal = np.linalg.norm(self.normalized_normal)
         mag_sun_normal = np.linalg.norm(sun.get_direction())
-        #print(f"Magnitudes {mag_panel_normal}, {mag_sun_normal}")
+        # print(f"Magnitudes {mag_panel_normal}, {mag_sun_normal}")
         a = np.dot(self.normalized_normal, sun.get_direction())
         b = np.dot(mag_panel_normal, mag_sun_normal)
         c = a / b
@@ -148,38 +145,57 @@ def show_view(dome, sun, fig, plot_arrangement, plot_position, elev=0, azim=0):
                                 facecolors=color,
                                 edgecolors='black',
                                 linewidths=0.1)
-        #ax.quiver(panel.center[0], panel.center[1], panel.center[2],
+        # ax.quiver(panel.center[0], panel.center[1], panel.center[2],
         #          panel.normal[0], panel.normal[1], panel.normal[2],
         #          color='g', arrow_length_ratio=0.1)
         ax.add_collection3d(poly)
 
     sun_direction_vector = sun.get_direction()
-    sun_start = sun_direction_vector*-(size*1.5)
+    sun_start = sun_direction_vector * -(size * 1.5)
     ax.quiver(sun_start[0], sun_start[1], sun_start[2],
-              sun_direction_vector[0]*(size/3),
-              sun_direction_vector[1]*(size/3),
-              sun_direction_vector[2]*(size/3),
+              sun_direction_vector[0] * (size / 3),
+              sun_direction_vector[1] * (size / 3),
+              sun_direction_vector[2] * (size / 3),
               color='r', arrow_length_ratio=0.01)
 
     ax.view_init(elev=elev, azim=azim)
-    #ax.grid(False)
-    #ax.axis('off')
+    # ax.grid(False)
+    # ax.axis('off')
+
+
+def run_full_simulation(dome, sun, fig):
+    time_delta = 60
+
+    start_date = Time(2023, 1, 1, 0, 0, 0)
+    end_date = Time(2023, 1, 31, 12, 59, 59)
+
+    sun.current_time = start_date
+
+    while end_date.is_greater(start_date):
+        start_time_day = datetime.datetime.now()
+        for _ in sun.iterate_sunrise_to_sunset(time_delta=time_delta):
+            dome.update_shading()
+            dome.compute_absorbed_power()
+        sun.current_time.next_day()
+        end_time_day = datetime.datetime.now()
+        print(f"Took {end_time_day - start_time_day} to simulate a day")
+    save_data(dome)
+    dome.render_absorbed_power()
+    show_dome(dome, sun, fig)
 
 
 def run_simulation(dome, sun):
-    time_delta = 60*120
-    start_time = datetime.datetime.now()
-    end_time = datetime.datetime.now()
-    for current_time in sun.iterate_sunrise_to_sunset(time_delta):
+    time_delta = 60 * 120
+    for current_time in sun.iterate_sunrise_to_sunset(time_delta=time_delta):
         print(current_time)
         start_time = datetime.datetime.now()
         dome.update_shading()
         end_time = datetime.datetime.now()
-        print(f"Shading took {end_time-start_time}s")
+        print(f"Shading took {end_time - start_time}s")
         yield dome
-        #dome.compute_absorbed_power()
-        #show_dome(dome, sun, fig)
-    #dome.render_absorbed_power()
+        # dome.compute_absorbed_power()
+        # show_dome(dome, sun, fig)
+    # dome.render_absorbed_power()
 
 
 def save_data(dome):
@@ -211,14 +227,14 @@ def save_data(dome):
 
 
 def render_simulation(fig, dome, sun):
-
     start_time = datetime.datetime.now()
     end_time = datetime.datetime.now()
+
     def animate(an_dome):
         start_time = datetime.datetime.now()
         show_dome(an_dome, sun, fig)
         end_time = datetime.datetime.now()
-        print(f"Took {end_time-start_time}s")
+        print(f"Took {end_time - start_time}s")
 
     animation = FuncAnimation(fig, func=animate, frames=run_simulation(dome, sun), interval=25)
     # setting up wrtiers object
@@ -239,16 +255,18 @@ def main():
     latitude = np.radians(53.338243)  # Replace with the desired latitude in radians
     longitude = np.radians(-6.215847)
 
-    #fig = plt.figure(dpi=1200)
-    fig = plt.figure(figsize=(16, 9), dpi=1920/16)
+    fig = plt.figure(dpi=1200)
+    #fig = plt.figure(figsize=(16, 9), dpi=1920 / 16)
 
     sun = Sun(latitude, longitude)
 
     radius = 94.5
     dome = GeodesicDome(sun, radius=radius, subdivisions=3)
-    render_simulation(fig, dome, sun)
-    #live_view(dome, sun, fig)
-    plt.show()
+    # render_simulation(fig, dome, sun)
+    # live_view(dome, sun, fig)
+    run_full_simulation(dome, sun, fig)
+    fig.savefig("data/full_sim_figure.png")
+    #plt.show()
 
 
 if __name__ == "__main__":
