@@ -46,12 +46,23 @@ class GeodesicDome:
 
     def render_absorbed_power(self):
         maximum_absorbed = 0
+        total_absorbed = 0
         for panel in self.panels:
+            total_absorbed += panel.absorbed_power
             if panel.absorbed_power > maximum_absorbed:
                 maximum_absorbed = panel.absorbed_power
 
+        avg_absorbed_power = total_absorbed / len(self.panels)
+        power_ninety = maximum_absorbed * 0.50
+        print(f"Average absorbed power {avg_absorbed_power}")
         for panel in self.panels:
-            panel.update_face_color(map_range(panel.absorbed_power, 0, maximum_absorbed, 0, 1))
+            #print(f"Absorbed power {panel.absorbed_power}")
+            if panel.absorbed_power > 150000:
+                #print(f"panel is white with {panel.absorbed_power}")
+                panel.update_face_color(0) # white
+            else:
+                print(f"panel is black with {panel.absorbed_power}")
+                panel.update_face_color(1) # black
 
 
 class SolarPanel:
@@ -167,7 +178,7 @@ def run_full_simulation(dome, sun, fig):
     time_delta = 60
 
     start_date = Time(2023, 1, 1, 0, 0, 0)
-    end_date = Time(2023, 1, 31, 12, 59, 59)
+    end_date = Time(2023, 12, 31, 12, 59, 59)
 
     sun.current_time = start_date
 
@@ -207,6 +218,11 @@ def save_data(dome):
     avg_area = rolling_sum / len(panels)
     print(f"Average area = {avg_area}")
 
+    vertexes = []
+    for panel in panels:
+        vertexes.append(panel.get_triangle())
+
+
     area = []
     for panel in panels:
         area.append(panel.get_area())
@@ -220,6 +236,7 @@ def save_data(dome):
         illumination_area.append(panel.get_area() * panel.get_face_color())
 
     panel_illumination = pandas.DataFrame()
+    panel_illumination['vertexes'] = vertexes
     panel_illumination['area'] = area
     panel_illumination['shading'] = shading
     panel_illumination['illuminated per area'] = illumination_area
