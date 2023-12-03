@@ -7,11 +7,12 @@ from simulation import Simulation, map_range
 
 
 def show_dome(dome, fig):
-    arrangement = (2, 2)
-    show_view(dome, fig, arrangement, 1, elev=90, azim=0)
-    show_view(dome, fig, arrangement, 2, elev=10, azim=135)
-    show_view(dome, fig, arrangement, 3, elev=30, azim=-90)
-    show_view(dome, fig, arrangement, 4, elev=0, azim=180)
+    arrangement = (1, 1)
+    show_view(dome, fig, arrangement, 1, elev=35, azim=-125)
+    #show_view(dome, fig, arrangement, 1, elev=90, azim=0)
+    #show_view(dome, fig, arrangement, 2, elev=10, azim=135)
+    #show_view(dome, fig, arrangement, 3, elev=30, azim=-90)
+    #show_view(dome, fig, arrangement, 4, elev=0, azim=180)
 
 
 def show_view(dome, fig, plot_arrangement, plot_position, elev=0, azim=0):
@@ -32,19 +33,22 @@ def show_view(dome, fig, plot_arrangement, plot_position, elev=0, azim=0):
     viridis = mpl.colormaps['viridis']
     # Plot each triangle with its corresponding color
     for i, panel in enumerate(dome.panels):
-        color = viridis(map_range(panel.get_total_irradiance(), min_irradiance, max_irradiance, 0, 1))
+        #color = viridis(map_range(panel.get_total_irradiance(), min_irradiance, max_irradiance, 0, 1))
+        color = 'white'
+        if panel.get_total_irradiance() > 0:
+            color = 'lightblue'
         poly = Poly3DCollection([panel.vertices], cmap='viridis',
                                 facecolors=color,
                                 edgecolors='black',
-                                linewidths=0.1)
+                                linewidths=1)
         pff = ax.add_collection3d(poly)
 
-    plt.colorbar(pff, ax=ax)
+    #plt.colorbar(pff, ax=ax)
     #cbar = plt.colorbar(plt.cm.ScalarMappable(cmap=viridis), ax=ax)
 
     ax.view_init(elev=elev, azim=azim)
-    # ax.grid(False)
-    # ax.axis('off')
+    ax.grid(False)
+    #ax.axis('off')
 
 
 def render_simulation(fig, dome, sun):
