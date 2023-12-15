@@ -4,6 +4,9 @@ from scipy.spatial.transform import Rotation
 
 
 def generate_vertices_and_faces(radius, center):
+    # Original vertices taken from Tom Davis
+    # tomrdavis@earthlink.net
+    # http://www.geometer.org/mathcircles
     r = (1.0 + np.sqrt(5.0)) / 2.0
     vertices = np.array([
         [-1.0, r, 0.0],  # 0
@@ -88,6 +91,7 @@ class BetterGeodesicDomeGenerator:
         tolerance = self.radius/10
         valid_faces = []
         for face in self.faces:
+            # Checking for z component below 0 with certain tolerance. 
             if self.vertices[face[0]][2] >= 0 - tolerance and \
                     self.vertices[face[1]][2] >= 0 - tolerance and \
                     self.vertices[face[2]][2] >= 0 - tolerance:

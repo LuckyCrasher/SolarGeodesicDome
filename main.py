@@ -33,10 +33,10 @@ def show_view(dome, fig, plot_arrangement, plot_position, elev=0, azim=0):
     viridis = mpl.colormaps['viridis']
     # Plot each triangle with its corresponding color
     for i, panel in enumerate(dome.panels):
-        #color = viridis(map_range(panel.get_total_irradiance(), min_irradiance, max_irradiance, 0, 1))
-        color = 'white'
-        if panel.get_total_irradiance() > 0:
-            color = 'lightblue'
+        color = viridis(map_range(panel.get_total_irradiance(), min_irradiance, max_irradiance, 0, 1))
+        #color = 'white'
+        #if panel.get_total_irradiance() > 0:
+        #    color = 'lightblue'
         poly = Poly3DCollection([panel.vertices], cmap='viridis',
                                 facecolors=color,
                                 edgecolors='black',
@@ -95,6 +95,7 @@ def main():
     simulation = Simulation(radius, subdivisions, latitude, longitude, start_timestamp, end_timestamp, pvlib_parameters)
     simulation.run()
     simulation.filter_panels(0.96)
+    print(simulation.dome.compute_average_area())
     dome = simulation.get_dome()
     show_dome(dome, fig)
     # simulation.export_irradiance()

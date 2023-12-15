@@ -91,7 +91,9 @@ class DomePanel(FixedMount):
     def compute_surface_tilt(self):
         normal_upright = np.array([0, 0, 1])
         normal = self.compute_normal()
-        angle = compute_angle(normal_upright, normal)
+        x_elim = np.array([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
+        normal_x_elim = np.matmul(normal, x_elim)
+        angle = compute_angle(normal_upright, normal_x_elim)
         return angle
 
     def __repr__(self):
@@ -116,6 +118,13 @@ class GeodesicDome:
             arrays.append(Array(panel, name=f"panel {i}", **panel.pvlib_parameters))
             self.panels.append(panel)
         return arrays
+
+    def compute_average_area(self):
+        area = 0
+        for panel in self.panels:
+            area += panel.compute_area()
+        area /= len(self.panels)
+        return area
 
     def set_max_irradiance(self, v):
         self.max_irradiance = v
@@ -162,6 +171,7 @@ class Simulation:
         data = self.mc.results.total_irrad
         panel_irradiance = []
         for i, panel in enumerate(data):
+            print(panel.head())
             irradiance = panel.sum()
             total_irradiance = irradiance['poa_global'] + \
                                irradiance['poa_direct'] + \
@@ -183,8 +193,8 @@ class Simulation:
         filtered = []
         for panel, dome_panel in zip(panels, self.dome.panels):
             _, irradiance = panel
+            dome_panel.set_total_irradiance(irradiance)
             if irradiance > avg_total_irradiance * percentage:
-                dome_panel.set_total_irradiance(irradiance)
                 filtered.append(dome_panel)
         print(len(filtered))
 
