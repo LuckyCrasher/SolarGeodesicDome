@@ -88,7 +88,7 @@ class BetterGeodesicDomeGenerator:
         print("FINISHED GENERATING")
 
     def split_on_equator(self):
-        tolerance = self.radius/10
+        tolerance = self.radius/20
         valid_faces = []
         for face in self.faces:
             # Checking for z component below 0 with certain tolerance. 

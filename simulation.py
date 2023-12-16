@@ -49,10 +49,15 @@ class DomePanel(FixedMount):
         self.azimuth = self.compute_azimuth()
         self.pvlib_parameters['module_parameters']['area'] = self.compute_area()
         self.total_irradiance = 0
+        self.irradiance_data = None
+        self.is_filtered = False
         super().__init__(surface_tilt=self.surface_tilt,
                          surface_azimuth=self.azimuth,
                          racking_model='close_mount',
                          module_height=self.module_height)
+
+    def set_filtered(self, value):
+        self.is_filtered = value
 
     def set_total_irradiance(self, v):
         self.total_irradiance = v
@@ -95,6 +100,9 @@ class DomePanel(FixedMount):
         normal_x_elim = np.matmul(normal, x_elim)
         angle = compute_angle(normal_upright, normal_x_elim)
         return angle
+
+    def set_irradiance_data(self, data):
+        self.irradiance_data = data
 
     def __repr__(self):
         return f"{self.vertices}"
@@ -146,7 +154,7 @@ class Simulation:
         self.subdivisions = subdivisions
         self.dome = GeodesicDome(radius, subdivisions)
         self.location = Location(latitude, longitude)
-        self.times = pd.date_range(start_timestamp, end_timestamp, freq='1H', tz="Etc/GMT")
+        self.times = pd.date_range(start_timestamp, end_timestamp, freq='3H', tz="Etc/GMT")
         self.pvlib_parameters = pvlib_parameters
         self.weather = self.location.get_clearsky(self.times)
         self.arrays = self.dome.populate_modules(self.pvlib_parameters)
@@ -171,7 +179,7 @@ class Simulation:
         data = self.mc.results.total_irrad
         panel_irradiance = []
         for i, panel in enumerate(data):
-            print(panel.head())
+            #print(panel.head())
             irradiance = panel.sum()
             total_irradiance = irradiance['poa_global'] + \
                                irradiance['poa_direct'] + \
@@ -192,11 +200,14 @@ class Simulation:
         self.dome.set_min_irradiance(min_irradiance)
         filtered = []
         for panel, dome_panel in zip(panels, self.dome.panels):
-            _, irradiance = panel
+            data, irradiance = panel
+            dome_panel.set_irradiance_data(data)
             dome_panel.set_total_irradiance(irradiance)
             if irradiance > avg_total_irradiance * percentage:
+                dome_panel.set_filtered(True)
                 filtered.append(dome_panel)
         print(len(filtered))
+        return filtered
 
     def get_dome(self):
         return self.dome
