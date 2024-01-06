@@ -4,6 +4,9 @@ from scipy.spatial.transform import Rotation
 
 
 def generate_vertices_and_faces(radius, center):
+    # Original vertices taken from Tom Davis
+    # tomrdavis@earthlink.net
+    # http://www.geometer.org/mathcircles
     r = (1.0 + np.sqrt(5.0)) / 2.0
     vertices = np.array([
         [-1.0, r, 0.0],  # 0
@@ -28,6 +31,9 @@ def generate_vertices_and_faces(radius, center):
     vertices = vertices / length * radius + center
 
     vertices = clamp_small_to_zero(vertices)
+
+    print("Rotated vertices")
+    print(vertices)
 
     faces = np.array([
         [0, 11, 5],
@@ -56,7 +62,7 @@ def generate_vertices_and_faces(radius, center):
 
 
 def clamp_small_to_zero(values):
-    tol = 1e-2
+    tol = 1e-13
     values[np.abs(values) <= tol] = 0
     return values
 
@@ -69,9 +75,9 @@ def compute_middle_vertex(a, b, radius=1):
     return c_prime
 
 
-class BetterGeodesicDome:
+class BetterGeodesicDomeGenerator:
 
-    def __init__(self, subdivisions=0, radius=1, center=(0, 0, 0)):
+    def __init__(self, subdivisions=0, radius=1.0, center=(0, 0, 0)):
         self.subdivisions = subdivisions
         self.radius = radius
         self.center = center
@@ -85,13 +91,14 @@ class BetterGeodesicDome:
         tolerance = self.radius/10
         valid_faces = []
         for face in self.faces:
+            # Checking for z component below 0 with certain tolerance. 
             if self.vertices[face[0]][2] >= 0 - tolerance and \
                     self.vertices[face[1]][2] >= 0 - tolerance and \
                     self.vertices[face[2]][2] >= 0 - tolerance:
                 valid_faces.append(face)
         self.faces = valid_faces
 
-    def subdivide(self, divisions=0, radius=1):
+    def subdivide(self, divisions=0, radius=1.0):
         for _ in range(divisions):
 
             # enumerating each triangle
@@ -104,6 +111,7 @@ class BetterGeodesicDome:
                 # each edge is split in two
                 # enumerating each edge of the triangle like
                 # edge (0,1) or (1,2) or (2,0) where (1,0) and (0,1) are the same edge
+                # therefore (0, 1) (1, 2) (2, 0)
                 for i, j in zip([0, 1, 2], [1, 2, 0]):
                     print(f"Edge: {i},{j}")
                     v_id_a = triangle[i]
@@ -128,8 +136,8 @@ class BetterGeodesicDome:
                 # old vertex and two newly computed ones
                 # The last middle triangle is composed of three newly computed vertices
                 triangle_a = [triangle[0], edge_to_new_vertex_id[(0, 1)], edge_to_new_vertex_id[2, 0]]
-                triangle_b = [triangle[1], edge_to_new_vertex_id[(0, 1)], edge_to_new_vertex_id[1, 2]]
-                triangle_c = [triangle[2], edge_to_new_vertex_id[(1, 2)], edge_to_new_vertex_id[2, 0]]
+                triangle_b = [triangle[1], edge_to_new_vertex_id[(1, 2)], edge_to_new_vertex_id[0, 1]]
+                triangle_c = [triangle[2], edge_to_new_vertex_id[(2, 0)], edge_to_new_vertex_id[1, 2]]
                 triangle_d = [edge_to_new_vertex_id[0, 1], edge_to_new_vertex_id[1, 2], edge_to_new_vertex_id[2, 0]]
 
                 print("New triangles:")
